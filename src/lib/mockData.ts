@@ -22,6 +22,16 @@ export const mockDrivers: Driver[] = [
   { id: 'd3', name: 'Youssef Idrissi', licensePlate: '44556-C-25', status: 'on-trip', lastTripDate: '2024-05-16', settlements: [] },
 ];
 
+// NEW EXCEL MAPPED MOCK DATA
 export const mockVouchers: DieselVoucher[] = [
-  { id: 'v1', voucherNumber: 'VN-9901', date: '2024-05-16', truckPlate: '12345-A-10', driverName: 'Omar Benali', liters: 450, amount: 5200, consumption: 32.5 },
+  { 
+    id: 'v1', voucherNumber: 'VN-9901', date: '2024-05-16', truckPlate: '12345-A-10', driverName: 'Omar Benali', 
+    kmPrecedent: 150000, kmActuel: 151187, kmParcouru: 1187, lavageGraissage: 50, gasoilDhs: 5200, gasoilLiters: 450, 
+    consommation: 37.9, prixLitre: 11.55, station: 'Afriquia'
+  },
+  { 
+    id: 'v2', voucherNumber: 'VN-9902', date: '2024-05-15', truckPlate: '98765-B-40', driverName: 'Khalid Saidi', 
+    kmPrecedent: 85000, kmActuel: 86420, kmParcouru: 1420, lavageGraissage: 0, gasoilDhs: 6100, gasoilLiters: 520, 
+    consommation: 36.6, prixLitre: 11.73, station: 'Total Energies'
+  },
 ];
