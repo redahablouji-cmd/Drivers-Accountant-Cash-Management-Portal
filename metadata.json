@@ -1,0 +1,8 @@
+{
+  "name": "Drivers Accountant & Cash Management Portal",
+  "description": "High-density enterprise portal for heavy-logistics accountants to reconcile trips, manage cash registers, and track diesel fuel consumption.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
