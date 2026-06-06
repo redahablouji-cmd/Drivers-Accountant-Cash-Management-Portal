@@ -13,6 +13,7 @@ export default function App() {
   const [currentView, setCurrentView] = React.useState<ViewState>('dashboard');
   const [profile,     setProfile]     = React.useState<any>(null);
   const [authLoading, setAuthLoading] = React.useState(true);
+  const [caissBalance, setCaissBalance] = React.useState(0);
 
   // Restore session on load
   React.useEffect(() => {
@@ -84,6 +85,7 @@ export default function App() {
         setView={setCurrentView}
         profile={profile}
         onSignOut={handleSignOut}
+        balance={caissBalance}
       >
         {renderView()}
       </Shell>

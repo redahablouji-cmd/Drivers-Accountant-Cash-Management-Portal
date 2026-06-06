@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockTransactions } from "@/lib/mockData";
+import { supabase } from "@/lib/supabase";
 import { CashTransaction } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -39,12 +39,19 @@ const emptyForm = {
 
 export function Caisse() {
   // Using local state to manage live ledger additions
-  const [transactions, setTransactions] = React.useState<CashTransaction[]>(mockTransactions);
+  const [transactions, setTransactions] = React.useState<CashTransaction[]>([]);
+
+  React.useEffect(() => {
+    supabase.from('cash_transactions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setTransactions(data || []));
+  }, []);
   const [activeForm, setActiveForm] = React.useState<'none' | 'in' | 'out'>('none');
   const [formData, setFormData] = React.useState(emptyForm);
 
   // Get current running balance safely from the top of the ledger
-  const currentBalance = transactions.length > 0 ? transactions[0].balance : 100000;
+  const currentBalance = transactions.length > 0 ? transactions[0].balance : 0;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,10 +81,17 @@ export function Caisse() {
       balance: nextBalance
     };
 
-    console.log("SAVING TRANSACTION TO SUPABASE:", newTx);
-    
-    // Unshift puts the newest record at the top of the table
-    setTransactions([newTx, ...transactions]);
+    supabase.from('cash_transactions').insert({
+      reference:      newTx.reference,
+      entity:         newTx.entity,
+      description:    newTx.description,
+      amount:         newTx.amount,
+      type:           newTx.type,
+      balance:        newTx.balance,
+      timestamp:      newTx.timestamp,
+    }).then(({ error }) => {
+      if (!error) setTransactions([newTx, ...transactions]);
+    });
     setActiveForm('none');
     setFormData(emptyForm);
   };
@@ -272,7 +286,7 @@ export function Caisse() {
             <div className="flex gap-6">
               <div className="text-right">
                 <p className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Opening</p>
-                <p className="text-sm font-bold font-mono">100,000.00</p>
+                <p className="text-sm font-bold font-mono">0.00</p>
               </div>
               <div className="text-right border-l border-slate-800 pl-6">
                 <p className="text-[9px] uppercase font-bold text-blue-400 tracking-wider">Current Target</p>

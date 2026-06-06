@@ -24,9 +24,10 @@ interface ShellProps {
   children: React.ReactNode;
   profile: any;
   onSignOut: () => void;
+  balance?: number;
 }
 
-export function Shell({ currentView, setView, children, profile, onSignOut }: ShellProps) {
+export function Shell({ currentView, setView, children, profile, onSignOut, balance = 0 }: ShellProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const menuItems = [
@@ -93,24 +94,7 @@ export function Shell({ currentView, setView, children, profile, onSignOut }: Sh
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 shrink-0">
-          <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-xs border border-blue-200">
-              AD
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-slate-900 truncate">Admin Accountant</p>
-                <p className="text-[10px] text-slate-500 truncate">HQ Branch (Casablanca)</p>
-              </div>
-            )}
-            {!isCollapsed && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-rose-600">
-                <LogOut size={16} />
-              </Button>
-            )}
-          </div>
-        </div>
+        
       </aside>
 
       {/* Main Area */}
@@ -130,7 +114,9 @@ export function Shell({ currentView, setView, children, profile, onSignOut }: Sh
           <div className="flex items-center gap-6">
             <div className="flex flex-col items-end">
               <span className="text-[10px] text-slate-400 uppercase font-bold">Current Register Cash</span>
-              <span className="text-emerald-600 font-bold text-sm tracking-tight font-mono">14,550.00 MAD</span>
+              <span className="text-emerald-600 font-bold text-sm tracking-tight font-mono">
+                {balance.toLocaleString('fr-MA', { minimumFractionDigits: 2 })} MAD
+              </span>
             </div>
             
             <button className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
