@@ -101,7 +101,12 @@ export function SettlementWorkspace() {
       </div>
 
       {/* Right Pane: Dynamic Workspace */}
-       <motion.div key={selectedDriver?.id}initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 overflow-y-auto bg-slate-50/30">
+       <motion.div key={selectedDriver?.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 overflow-y-auto bg-slate-50/30">
+        {!selectedDriver ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-slate-400">Chargement des chauffeurs...</p>
+          </div>
+        ) : (
         <div className="p-8 max-w-6xl mx-auto space-y-6 pb-24">
           
           {/* Header */}
@@ -281,6 +286,7 @@ export function SettlementWorkspace() {
           )}
 
         </div>
+        )}
       </motion.div>
     </div>
   );
