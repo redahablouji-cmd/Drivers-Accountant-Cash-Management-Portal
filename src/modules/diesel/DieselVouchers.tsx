@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockVouchers, mockDrivers } from "@/lib/mockData";
+import { mockVouchers } from "@/lib/mockData";
+import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { DieselVoucher } from "@/lib/types";
@@ -25,11 +26,24 @@ const defaultStations = [
 ];
 
 export function DieselVouchers() {
-  // Use unique license plates from drivers to form our vehicle queue
-  const [selectedTruck, setSelectedTruck] = React.useState(mockDrivers[0].licensePlate);
+  const [drivers, setDrivers] = React.useState<any[]>([]);
+  const [selectedTruck, setSelectedTruck] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
   const [vouchers, setVouchers] = React.useState<DieselVoucher[]>(mockVouchers);
   const [stationList, setStationList] = React.useState(defaultStations);
+
+  React.useEffect(() => {
+    supabase
+      .from('staff_profiles')
+      .select('id, full_name, vehicle_plate, employee_code')
+      .eq('role', 'driver')
+      .eq('is_active', true)
+      .then(({ data }) => {
+        const list = data || [];
+        setDrivers(list);
+        if (list.length > 0) setSelectedTruck(list[0].vehicle_plate || '');
+      });
+  }, []);
   
   // Initialize form with the selected truck pre-filled
   const [formData, setFormData] = React.useState({
@@ -71,7 +85,7 @@ export function DieselVouchers() {
       id: `VCH-${Math.floor(Math.random() * 10000)}`,
       voucherNumber: formData.voucherNumber,
       date: formData.date,
-      driverName: mockDrivers.find(d => d.id === formData.driverName)?.name || formData.driverName,
+      driverName: drivers.find(d => d.id === formData.driverName)?.full_name || formData.driverName,
       truckPlate: selectedTruck, // Lock to active vehicle
       kmPrecedent: kmPrev,
       kmActuel: kmCurr,
@@ -107,7 +121,7 @@ export function DieselVouchers() {
       <div className="w-64 border-r border-slate-200 bg-slate-50 flex flex-col shrink-0">
         <div className="p-3 border-b border-slate-200 flex justify-between items-center">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Fleet Trucks</span>
-          <span className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded font-bold text-slate-600">{mockDrivers.length}</span>
+          <span className="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded font-bold text-slate-600">{drivers.length}</span>
         </div>
         <div className="p-3 border-b border-slate-200 bg-white">
           <div className="relative">
@@ -116,20 +130,22 @@ export function DieselVouchers() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-          {mockDrivers.map((driver) => (
+          {drivers.length === 0 ? (
+            <div className="p-4 text-center text-xs text-slate-400">Aucun chauffeur trouvé.</div>
+          ) : drivers.map((driver) => (
             <button
               key={driver.id}
-              onClick={() => { setSelectedTruck(driver.licensePlate); setIsCreating(false); }}
+              onClick={() => { setSelectedTruck(driver.vehicle_plate || ''); setIsCreating(false); }}
               className={cn(
                 "w-full p-4 text-left transition-all", 
-                selectedTruck === driver.licensePlate ? "bg-blue-50/50 border-l-2 border-blue-600" : "hover:bg-slate-100/50"
+                selectedTruck === driver.vehicle_plate ? "bg-blue-50/50 border-l-2 border-blue-600" : "hover:bg-slate-100/50"
               )}
             >
               <div className="flex flex-col">
-                <span className={cn("text-xs font-bold font-mono tracking-tight", selectedTruck === driver.licensePlate ? "text-blue-700" : "text-slate-800")}>
-                  {driver.licensePlate}
+                <span className={cn("text-xs font-bold font-mono tracking-tight", selectedTruck === driver.vehicle_plate ? "text-blue-700" : "text-slate-800")}>
+                  {driver.vehicle_plate || '—'}
                 </span>
-                <span className="text-[10px] text-slate-400 mt-0.5 font-medium">Driver: {driver.name}</span>
+                <span className="text-[10px] text-slate-400 mt-0.5 font-medium">Driver: {driver.full_name}</span>
               </div>
             </button>
           ))}
@@ -249,7 +265,7 @@ export function DieselVouchers() {
                     <Select onValueChange={(val) => handleSelectChange('driverName', val)} value={formData.driverName}>
                       <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select Driver" /></SelectTrigger>
                       <SelectContent>
-                        {mockDrivers.map(d => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
+                        {drivers.map(d => (<SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mockDrivers } from "@/lib/mockData";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -16,8 +16,22 @@ const emptyForm = {
 type CreationStep = 'none' | 'select' | 'depart' | 'arrivee';
 
 export function SettlementWorkspace() {
-  const [selectedDriver, setSelectedDriver] = React.useState(mockDrivers[0]);
+  const [drivers, setDrivers] = React.useState<any[]>([]);
+  const [selectedDriver, setSelectedDriver] = React.useState<any>(null);
   const [creationStep, setCreationStep] = React.useState<CreationStep>('none');
+
+  React.useEffect(() => {
+    supabase
+      .from('staff_profiles')
+      .select('id, full_name, vehicle_plate, employee_code')
+      .eq('role', 'driver')
+      .eq('is_active', true)
+      .then(({ data }) => {
+        const list = data || [];
+        setDrivers(list);
+        if (list.length > 0) setSelectedDriver({ ...list[0], settlements: [] });
+      });
+  }, []);
   const [formData, setFormData] = React.useState(emptyForm);
 
   // Live Excel Calculations
@@ -40,7 +54,7 @@ export function SettlementWorkspace() {
       tripType: creationStep, // Tags it as 'depart' or 'arrivee'
       dateSaisie: new Date().toISOString().split('T')[0],
       codeStatus: 'saz',
-      chauffeur: selectedDriver.name,
+      chauffeur: selectedDriver?.full_name,
       sortie: calculatedSortie,
       solde: calculatedSolde
     };
@@ -69,23 +83,25 @@ export function SettlementWorkspace() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-          {mockDrivers.map((driver) => (
+          {drivers.length === 0 ? (
+            <div className="p-4 text-center text-xs text-slate-400">Aucun chauffeur trouvé.</div>
+          ) : drivers.map((driver) => (
             <button
               key={driver.id}
-              onClick={() => { setSelectedDriver(driver); setCreationStep('none'); }}
-              className={cn("w-full p-4 text-left transition-all", selectedDriver.id === driver.id ? "bg-blue-50/50 border-l-2 border-blue-600" : "hover:bg-slate-100/50")}
+              onClick={() => { setSelectedDriver({ ...driver, settlements: [] }); setCreationStep('none'); }}
+              className={cn("w-full p-4 text-left transition-all", selectedDriver?.id === driver.id ? "bg-blue-50/50 border-l-2 border-blue-600" : "hover:bg-slate-100/50")}
             >
               <div className="flex justify-between items-start mb-1">
-                <span className={cn("text-xs font-bold", selectedDriver.id === driver.id ? "text-slate-900" : "text-slate-700")}>{driver.name}</span>
+                <span className={cn("text-xs font-bold", selectedDriver?.id === driver.id ? "text-slate-900" : "text-slate-700")}>{driver.full_name}</span>
               </div>
-              <div className="text-[10px] text-slate-500">Plate: {driver.licensePlate}</div>
+              <div className="text-[10px] text-slate-500">Plate: {driver.vehicle_plate || '—'}</div>
             </button>
           ))}
         </div>
       </div>
 
       {/* Right Pane: Dynamic Workspace */}
-      <motion.div key={selectedDriver.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 overflow-y-auto bg-slate-50/30">
+       <motion.div key={selectedDriver?.id}initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 overflow-y-auto bg-slate-50/30">
         <div className="p-8 max-w-6xl mx-auto space-y-6 pb-24">
           
           {/* Header */}
@@ -95,8 +111,8 @@ export function SettlementWorkspace() {
                 <FileText className="text-blue-600 w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Ledger: {selectedDriver.name}</h1>
-                <p className="text-[10px] text-slate-400 font-bold tracking-wider">Truck Plate: {selectedDriver.licensePlate}</p>
+                <h1 className="text-sm font-bold text-slate-800 uppercase tracking-tight">Ledger: {selectedDriver?.full_name}</h1>
+                <p className="text-[10px] text-slate-400 font-bold tracking-wider">Truck Plate: {selectedDriver?.vehicle_plate || '—'}</p>
               </div>
             </div>
             {creationStep === 'none' ? (
