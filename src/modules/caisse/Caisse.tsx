@@ -42,7 +42,7 @@ export function Caisse() {
   const [transactions, setTransactions] = React.useState<CashTransaction[]>([]);
 
   React.useEffect(() => {
-    supabase.from('cash_transactions')
+    supabase.from('caisse_transactions')
       .select('*')
       .order('created_at', { ascending: false })
       .then(({ data }) => setTransactions(data || []));
@@ -62,39 +62,47 @@ export function Caisse() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSaveTransaction = () => {
-    const txAmount = Number(formData.amount) || 0;
-    if (txAmount <= 0) return;
+  const handleSaveTransaction = async () => {
+  const txAmount = Number(formData.amount) || 0;
+  if (txAmount <= 0) return;
 
-    // Live ledger balance calculation
-    const nextBalance = activeForm === 'in' ? currentBalance + txAmount : currentBalance - txAmount;
+  const nextBalance = activeForm === 'in' ? currentBalance + txAmount : currentBalance - txAmount;
 
-    // Creating the new record mapping Excel columns to our interface
+  const { data, error } = await supabase
+    .from('caisse_transactions')
+    .insert({
+      reference:      formData.reference || (activeForm === 'in' ? 'ENTRÉE' : 'SORTIE'),
+      entity:         formData.paymentMethod || 'Espèces',
+      description:    formData.description,
+      amount:         txAmount,
+      type:           activeForm === 'in' ? 'in' : 'out',
+      balance:        nextBalance,
+      payment_method: formData.paymentMethod || 'Espèces',
+      date:           formData.date,
+    })
+    .select()
+    .single();
+
+  if (!error && data) {
     const newTx: CashTransaction = {
-      id: `TX-${Math.floor(Math.random() * 10000)}`,
-      timestamp: formData.date,
-      reference: formData.reference || (activeForm === 'in' ? 'ENTRÉE' : 'SORTIE'),
-      entity: formData.paymentMethod || 'Espèces', // Storing Payment Method in the 'entity' column for history
-      description: formData.description,
-      amount: txAmount,
-      type: activeForm === 'in' ? 'in' : 'out',
-      balance: nextBalance
+      id:          data.id,
+      timestamp:   data.date,
+      reference:   data.reference,
+      entity:      data.entity,
+      description: data.description,
+      amount:      data.amount,
+      type:        data.type,
+      balance:     data.balance,
     };
+    setTransactions([newTx, ...transactions]);
+  } else if (error) {
+    console.error('Caisse insert error:', error.message);
+    alert(`Erreur: ${error.message}`);
+  }
 
-    supabase.from('cash_transactions').insert({
-      reference:      newTx.reference,
-      entity:         newTx.entity,
-      description:    newTx.description,
-      amount:         newTx.amount,
-      type:           newTx.type,
-      balance:        newTx.balance,
-      timestamp:      newTx.timestamp,
-    }).then(({ error }) => {
-      if (!error) setTransactions([newTx, ...transactions]);
-    });
-    setActiveForm('none');
-    setFormData(emptyForm);
-  };
+  setActiveForm('none');
+  setFormData(emptyForm);
+};
 
   return (
     <motion.div 
