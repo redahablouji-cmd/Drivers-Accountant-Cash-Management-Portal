@@ -66,7 +66,7 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':   return <Dashboard />;
-      case 'caisse':      return <Caisse />;
+      case 'caisse': return <Caisse profile={profile} />;
       case 'settlement':  return <SettlementWorkspace />;
       case 'diesel':      return <DieselVouchers />;
       default:

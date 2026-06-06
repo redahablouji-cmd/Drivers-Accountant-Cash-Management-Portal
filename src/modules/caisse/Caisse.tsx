@@ -37,7 +37,11 @@ const emptyForm = {
   amount: ""
 };
 
-export function Caisse() {
+interface CaisseProps {
+  profile?: any;
+}
+
+export function Caisse({ profile }: CaisseProps) {
   // Using local state to manage live ledger additions
   const [transactions, setTransactions] = React.useState<CashTransaction[]>([]);
 
@@ -71,6 +75,8 @@ export function Caisse() {
   const { data, error } = await supabase
     .from('caisse_transactions')
     .insert({
+      company_id:     profile?.company_id || null,
+      accountant_id:  profile?.id         || null,
       reference:      formData.reference || (activeForm === 'in' ? 'ENTRÉE' : 'SORTIE'),
       entity:         formData.paymentMethod || 'Espèces',
       description:    formData.description,
