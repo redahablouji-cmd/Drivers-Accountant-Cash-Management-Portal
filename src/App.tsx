@@ -67,8 +67,8 @@ export default function App() {
     switch (currentView) {
       case 'dashboard':   return <Dashboard />;
       case 'caisse': return <Caisse profile={profile} />;
-      case 'settlement':  return <SettlementWorkspace />;
-      case 'diesel':      return <DieselVouchers />;
+      case 'settlement':  return <SettlementWorkspace profile={profile} />;
+      case 'diesel':      return <DieselVouchers profile={profile} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">

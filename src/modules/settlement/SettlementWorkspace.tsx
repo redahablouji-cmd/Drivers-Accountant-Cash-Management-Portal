@@ -15,7 +15,7 @@ const emptyForm = {
 
 type CreationStep = 'none' | 'select' | 'depart' | 'arrivee';
 
-export function SettlementWorkspace() {
+export function SettlementWorkspace({ profile }: { profile: any }) {
   const [drivers,        setDrivers]        = React.useState<any[]>([]);
   const [selectedDriver, setSelectedDriver] = React.useState<any>(null);
   const [creationStep,   setCreationStep]   = React.useState<CreationStep>('none');
@@ -25,17 +25,20 @@ export function SettlementWorkspace() {
 
   // Load drivers from Supabase
   React.useEffect(() => {
-    supabase
-      .from('staff_profiles')
-      .select('id, full_name, vehicle_plate, employee_code')
-      .eq('role', 'driver')
-      .eq('is_active', true)
-      .then(({ data }) => {
-        const list = data || [];
-        setDrivers(list);
-        if (list.length > 0) setSelectedDriver({ ...list[0], settlements: [] });
-      });
-  }, []);
+  if (!profile?.company_id) return;
+  supabase
+    .from('fleet_drivers')
+    .select('id, nom_prenom, immatriculation, code')
+    .eq('company_id', profile.company_id)
+    .order('code', { ascending: true })
+    .then(({ data }) => {
+      const list = (data || []).map((d: any) => ({
+        id: d.id, full_name: d.nom_prenom, vehicle_plate: d.immatriculation, employee_code: d.code,
+      }));
+      setDrivers(list);
+      if (list.length > 0) setSelectedDriver({ ...list[0], settlements: [] });
+    });
+}, [profile?.company_id]);
 
   // Load settlements when driver changes
   React.useEffect(() => {

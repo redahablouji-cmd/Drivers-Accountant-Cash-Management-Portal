@@ -21,7 +21,7 @@ const defaultStations = [
   { name: 'Ola Energy',   count: 0 },
 ];
 
-export function DieselVouchers() {
+export function DieselVouchers({ profile }: { profile: any }) {
   const [drivers,       setDrivers]       = React.useState<any[]>([]);
   const [selectedTruck, setSelectedTruck] = React.useState('');
   const [isCreating,    setIsCreating]    = React.useState(false);
@@ -38,15 +38,19 @@ export function DieselVouchers() {
 
   // Load drivers
   React.useEffect(() => {
-    supabase.from('staff_profiles')
-      .select('id, full_name, vehicle_plate, employee_code')
-      .eq('role', 'driver').eq('is_active', true)
-      .then(({ data }) => {
-        const list = data || [];
-        setDrivers(list);
-        if (list.length > 0) setSelectedTruck(list[0].vehicle_plate || '');
-      });
-  }, []);
+  if (!profile?.company_id) return;
+  supabase.from('fleet_drivers')
+    .select('id, nom_prenom, immatriculation, code')
+    .eq('company_id', profile.company_id)
+    .order('code', { ascending: true })
+    .then(({ data }) => {
+      const list = (data || []).map((d: any) => ({
+        id: d.id, full_name: d.nom_prenom, vehicle_plate: d.immatriculation, employee_code: d.code,
+      }));
+      setDrivers(list);
+      if (list.length > 0) setSelectedTruck(list[0].vehicle_plate || '');
+    });
+}, [profile?.company_id]);
 
   // Load vouchers when truck changes
   React.useEffect(() => {
