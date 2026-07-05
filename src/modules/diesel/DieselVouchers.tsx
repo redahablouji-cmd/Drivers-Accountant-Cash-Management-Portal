@@ -29,6 +29,7 @@ export function DieselVouchers({ profile }: { profile: any }) {
   const [stationList,   setStationList]   = React.useState(defaultStations);
   const [editingVoucher, setEditingVoucher] = React.useState<any | null>(null);
   const [editForm,      setEditForm]      = React.useState<any>({});
+  const [consoOverridden, setConsoOverridden] = React.useState(false);
 
   const [formData, setFormData] = React.useState({
     voucherNumber: '', date: new Date().toISOString().split('T')[0],
@@ -84,12 +85,6 @@ export function DieselVouchers({ profile }: { profile: any }) {
     setFormData(prev => ({ ...prev, truckPlate: selectedTruck, driverName: match?.id || '' }));
   }, [selectedTruck, drivers]);
 
-  const selectedDriverObj = drivers.find(d => d.id === formData.driverName);
-  const refConsommation = selectedDriverObj?.consommation || 0;
-  const consoDiff = refConsommation > 0 ? Math.abs(calculatedConsumption - refConsommation) : 0;
-  const consoStatus = refConsommation === 0 ? 'none' : consoDiff <= 1 ? 'green' : consoDiff <= 2 ? 'yellow' : 'red';
-  const [consoOverridden, setConsoOverridden] = React.useState(false);
-
   const filteredVouchers = vouchers.filter(v => v.truckPlate === selectedTruck);
 
   const kmPrev = Number(formData.kmPrecedent) || 0;
@@ -97,6 +92,11 @@ export function DieselVouchers({ profile }: { profile: any }) {
   const calculatedKm = kmCurr > kmPrev ? kmCurr - kmPrev : 0;
   const liters = Number(formData.gasoilLiters) || 0;
   const calculatedConsumption = calculatedKm > 0 ? (liters / calculatedKm) * 100 : 0;
+
+  const selectedDriverObj = drivers.find(d => d.id === formData.driverName);
+  const refConsommation = selectedDriverObj?.consommation || 0;
+  const consoDiff = refConsommation > 0 ? Math.abs(calculatedConsumption - refConsommation) : 0;
+  const consoStatus = refConsommation === 0 ? 'none' : consoDiff <= 1 ? 'green' : consoDiff <= 2 ? 'yellow' : 'red';
   const sortedStations = [...stationList].sort((a, b) => b.count - a.count);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
