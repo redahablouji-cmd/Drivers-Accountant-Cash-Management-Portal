@@ -92,6 +92,7 @@ export function DieselVouchers({ profile }: { profile: any }) {
   const calculatedKm = kmCurr > kmPrev ? kmCurr - kmPrev : 0;
   const liters = Number(formData.gasoilLiters) || 0;
   const calculatedConsumption = calculatedKm > 0 ? (liters / calculatedKm) * 100 : 0;
+  const autoPrixLitre = liters > 0 && Number(formData.gasoilDhs) > 0 ? (Number(formData.gasoilDhs) / liters) : 0;
 
   const selectedDriverObj = drivers.find(d => d.id === formData.driverName);
   const refConsommation = selectedDriverObj?.consommation || 0;
@@ -245,7 +246,17 @@ export function DieselVouchers({ profile }: { profile: any }) {
                   <History className="w-4 h-4 text-slate-500" />
                   <h2 className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Fuel History & Consumption Logs</h2>
                 </div>
-                <Button onClick={() => setIsCreating(true)}
+                <Button onClick={() => {
+                  const lastV = vouchers.length > 0 ? vouchers[0] : null;
+                  setFormData({
+                    voucherNumber: '', date: new Date().toISOString().split('T')[0],
+                    truckPlate: selectedTruck, driverName: selectedDriverObj?.id || '',
+                    kmPrecedent: lastV ? String(lastV.kmActuel) : '',
+                    kmActuel: '', lavageGraissage: '', gasoilDhs: '', gasoilLiters: '', prixLitre: '', station: ''
+                  });
+                  setConsoOverridden(false);
+                  setIsCreating(true);
+                }}
                   className="h-7 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-wider px-4">
                   <Plus className="w-3.5 h-3.5 mr-1" /> New Voucher
                 </Button>
@@ -353,7 +364,11 @@ export function DieselVouchers({ profile }: { profile: any }) {
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end bg-slate-50 p-4 rounded border border-slate-200">
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500">KM Précédent</Label>
-                    <Input type="number" name="kmPrecedent" value={formData.kmPrecedent} onChange={handleInputChange} className="h-8 text-xs font-mono bg-white" />
+                    <Input type="number" name="kmPrecedent" value={formData.kmPrecedent} onChange={handleInputChange}
+                      className={`h-8 text-xs font-mono ${formData.kmPrecedent ? 'bg-slate-100 font-bold text-slate-700' : 'bg-white'}`} />
+                    {vouchers.length > 0 && (
+                      <p className="text-[8px] text-slate-400 mt-0.5">Dernier: {vouchers[0].date} · {vouchers[0].kmActuel?.toLocaleString()} km · {vouchers[0].gasoilLiters}L</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500">KM Actuel</Label>
@@ -369,7 +384,10 @@ export function DieselVouchers({ profile }: { profile: any }) {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500">Prix Litre</Label>
-                    <Input type="number" name="prixLitre" value={formData.prixLitre} onChange={handleInputChange} className="h-8 text-xs font-mono bg-white" />
+                    <Input type="number" name="prixLitre" value={formData.prixLitre || (autoPrixLitre > 0 ? autoPrixLitre.toFixed(2) : '')} onChange={handleInputChange} className="h-8 text-xs font-mono bg-white" />
+                    {autoPrixLitre > 0 && !formData.prixLitre && (
+                      <p className="text-[8px] text-emerald-500 mt-0.5">Auto: {autoPrixLitre.toFixed(2)} MAD/L</p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
