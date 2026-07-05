@@ -195,7 +195,7 @@ export function DieselVouchers({ profile }: { profile: any }) {
             <div className="p-4 text-center text-xs text-slate-400">Aucun chauffeur trouvé.</div>
           ) : drivers.map((driver) => (
             <button key={driver.id}
-              onClick={() => { setSelectedTruck(driver.vehicle_plate || ''); setIsCreating(false); }}
+              onClick={() => { if (selectedTruck === driver.vehicle_plate) return; setSelectedTruck(driver.vehicle_plate || ''); setIsCreating(false); }}
               className={cn("w-full p-4 text-left transition-all",
                 selectedTruck === driver.vehicle_plate
                   ? "bg-blue-50/50 border-l-2 border-blue-600" : "hover:bg-slate-100/50")}>

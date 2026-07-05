@@ -171,7 +171,7 @@ export function SettlementWorkspace({ profile }: { profile: any }) {
             <div className="p-4 text-center text-xs text-slate-400">Aucun chauffeur trouvé.</div>
           ) : drivers.map((driver) => (
             <button key={driver.id}
-              onClick={() => { setSelectedDriver({ ...driver, settlements: [] }); setCreationStep('none'); }}
+              onClick={() => { if (selectedDriver?.id === driver.id) return; setSelectedDriver({ ...driver, settlements: [] }); setCreationStep('none'); }}
               className={cn("w-full p-4 text-left transition-all",
                 selectedDriver?.id === driver.id ? "bg-blue-50/50 border-l-2 border-blue-600" : "hover:bg-slate-100/50"
               )}>
