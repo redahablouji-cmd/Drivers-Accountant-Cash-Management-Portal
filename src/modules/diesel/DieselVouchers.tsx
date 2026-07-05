@@ -40,12 +40,12 @@ export function DieselVouchers({ profile }: { profile: any }) {
   React.useEffect(() => {
   if (!profile?.company_id) return;
   supabase.from('fleet_drivers')
-    .select('id, nom_prenom, immatriculation, code')
+    .select('id, nom_prenom, immatriculation, code, consommation')
     .eq('company_id', profile.company_id)
     .order('code', { ascending: true })
     .then(({ data }) => {
       const list = (data || []).map((d: any) => ({
-        id: d.id, full_name: d.nom_prenom, vehicle_plate: d.immatriculation, employee_code: d.code,
+        id: d.id, full_name: d.nom_prenom, vehicle_plate: d.immatriculation, employee_code: d.code, consommation: Number(d.consommation) || 0,
       }));
       setDrivers(list);
       if (list.length > 0) setSelectedTruck(list[0].vehicle_plate || '');
@@ -78,10 +78,17 @@ export function DieselVouchers({ profile }: { profile: any }) {
       });
   }, [selectedTruck]);
 
-  // Sync truck in form
+  // Sync truck + auto-fill driver in form
   React.useEffect(() => {
-    setFormData(prev => ({ ...prev, truckPlate: selectedTruck }));
-  }, [selectedTruck]);
+    const match = drivers.find(d => d.vehicle_plate === selectedTruck);
+    setFormData(prev => ({ ...prev, truckPlate: selectedTruck, driverName: match?.id || '' }));
+  }, [selectedTruck, drivers]);
+
+  const selectedDriverObj = drivers.find(d => d.id === formData.driverName);
+  const refConsommation = selectedDriverObj?.consommation || 0;
+  const consoDiff = refConsommation > 0 ? Math.abs(calculatedConsumption - refConsommation) : 0;
+  const consoStatus = refConsommation === 0 ? 'none' : consoDiff <= 1 ? 'green' : consoDiff <= 2 ? 'yellow' : 'red';
+  const [consoOverridden, setConsoOverridden] = React.useState(false);
 
   const filteredVouchers = vouchers.filter(v => v.truckPlate === selectedTruck);
 
@@ -103,10 +110,10 @@ export function DieselVouchers({ profile }: { profile: any }) {
 
   // Save to Supabase
   const handleSave = async () => {
-    const selectedDriverObj = drivers.find(d => d.id === formData.driverName);
+    const drvObj = drivers.find(d => d.id === formData.driverName);
     const { data, error } = await supabase.from('diesel_vouchers').insert({
-      driver_id:        selectedDriverObj?.id        || null,
-      driver_name:      selectedDriverObj?.full_name || formData.driverName,
+      driver_id:        drvObj?.id        || null,
+      driver_name:      drvObj?.full_name || formData.driverName,
       truck_plate:      selectedTruck,
       voucher_number:   formData.voucherNumber,
       date:             formData.date,
@@ -327,12 +334,10 @@ export function DieselVouchers({ profile }: { profile: any }) {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500">Salarié (Driver)</Label>
-                    <Select onValueChange={val => handleSelectChange('driverName', val)} value={formData.driverName}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select Driver" /></SelectTrigger>
-                      <SelectContent>
-                        {drivers.map(d => (<SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
+                    <Input value={selectedDriverObj?.full_name || '—'} disabled className="h-8 text-xs font-bold bg-slate-100 text-slate-700" />
+                    {refConsommation > 0 && (
+                      <p className="text-[9px] text-slate-400 mt-0.5">Réf. conso: <span className="font-bold font-mono">{refConsommation} L/100</span></p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500">Station</Label>
@@ -383,15 +388,42 @@ export function DieselVouchers({ profile }: { profile: any }) {
                     <div>
                       <Label className="text-[10px] uppercase font-bold text-slate-400">Consommation au 100</Label>
                       <div className={cn("text-xl font-bold font-mono flex items-center gap-2",
-                        calculatedConsumption > 35 ? "text-rose-600" : "text-emerald-600")}>
+                        consoStatus === 'green' || consoStatus === 'none' ? "text-emerald-600" :
+                        consoStatus === 'yellow' ? "text-amber-600" : "text-rose-600")}>
                         {calculatedConsumption > 0 ? calculatedConsumption.toFixed(2) : "0.00"} L
-                        {calculatedConsumption > 35 && <AlertTriangle size={16} className="text-rose-500" />}
+                        {consoStatus === 'yellow' && <AlertTriangle size={16} className="text-amber-500" />}
+                        {consoStatus === 'red' && <AlertTriangle size={16} className="text-rose-500" />}
                       </div>
+                      {refConsommation > 0 && calculatedConsumption > 0 && (
+                        <p className={cn("text-[9px] font-bold mt-1",
+                          consoStatus === 'green' ? "text-emerald-600" : consoStatus === 'yellow' ? "text-amber-600" : "text-rose-600")}>
+                          Réf: {refConsommation} L/100 · Écart: {consoDiff.toFixed(2)} L
+                          {consoStatus === 'green' && ' ✓ Normal'}
+                          {consoStatus === 'yellow' && ' ⚠ Attention'}
+                          {consoStatus === 'red' && ' ✗ Anormal'}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <Button onClick={handleSave} className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-md">
-                    <Save size={16} className="mr-2" /> RECORD VOUCHER
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    {consoStatus === 'red' && !consoOverridden && calculatedConsumption > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                          <p className="text-[10px] font-bold text-rose-700">Consommation anormale détectée ({consoDiff.toFixed(1)} L d'écart)</p>
+                          <p className="text-[9px] text-rose-500">Confirmez que cette valeur est correcte</p>
+                        </div>
+                        <Button onClick={() => setConsoOverridden(true)} className="h-10 bg-amber-500 hover:bg-amber-600 text-white font-bold px-4">
+                          <CheckCircle2 size={14} className="mr-1" /> Confirmer
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button onClick={() => { handleSave(); setConsoOverridden(false); }}
+                        disabled={consoStatus === 'red' && !consoOverridden && calculatedConsumption > 0}
+                        className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-md">
+                        <Save size={16} className="mr-2" /> RECORD VOUCHER
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
               <div className="bg-slate-50/50 p-2 border-t border-slate-100 flex items-center justify-center">

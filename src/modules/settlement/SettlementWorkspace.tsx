@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 const emptyForm = {
-  invoiceRef: '', dateDepart: '', agent: 'Admin', depart: '', arrivee: '', client: '', justification: '',
+  invoiceRef: '', dateDepart: new Date().toISOString().split('T')[0], agent: 'Admin', depart: '', arrivee: '', client: '', justification: '',
   fraisDeplacement: 0, peage: 0, gendarme: 0, reparation: 0, gasoilExterne: 0, autre: 0, entree: 0
 };
 
@@ -25,9 +25,13 @@ export function SettlementWorkspace({ profile }: { profile: any }) {
   const [completingTrip, setCompletingTrip] = React.useState<any | null>(null);
   const [blOtList, setBlOtList] = React.useState<string[]>(['']);
   const [driverSearch, setDriverSearch] = React.useState('');
+  const [clientsList, setClientsList] = React.useState<any[]>([]);
+  const [clientSearch, setClientSearch] = React.useState('');
 
   React.useEffect(() => {
     if (!profile?.company_id) return;
+    supabase.from('clients').select('id, nom').eq('company_id', profile.company_id).order('nom', { ascending: true })
+      .then(({ data }) => setClientsList(data || []));
     supabase.from('fleet_drivers')
       .select('id, nom_prenom, immatriculation, code')
       .eq('company_id', profile.company_id)
@@ -341,7 +345,22 @@ export function SettlementWorkspace({ profile }: { profile: any }) {
                     <h3 className="text-[10px] text-slate-400 uppercase font-bold mb-4 border-b pb-2">Informations du Voyage</h3>
                     <div className="grid grid-cols-4 gap-4">
                       <div className="space-y-2"><Label className="text-[10px] font-bold">Date Départ</Label><Input type="date" name="dateDepart" value={formData.dateDepart} onChange={handleInputChange} className="h-8 text-xs" /></div>
-                      <div className="space-y-2"><Label className="text-[10px] font-bold">Client</Label><Input name="client" value={formData.client} onChange={handleInputChange} className="h-8 text-xs" placeholder="Nom du client" /></div>
+                      <div className="space-y-2"><Label className="text-[10px] font-bold">Client</Label>
+                        <div className="relative">
+                          <input type="text" value={formData.client} placeholder="Rechercher client..."
+                            onChange={e => { setFormData(p => ({ ...p, client: e.target.value })); setClientSearch(e.target.value); }}
+                            onFocus={() => setClientSearch(formData.client || '')}
+                            className="w-full h-8 rounded-md border border-slate-200 px-3 text-xs focus:outline-none focus:border-blue-500" />
+                          {clientSearch !== null && clientsList.filter(c => c.nom?.toLowerCase().includes((formData.client || '').toLowerCase())).length > 0 && formData.client && (
+                            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-40 overflow-y-auto">
+                              {clientsList.filter(c => c.nom?.toLowerCase().includes(formData.client.toLowerCase())).map(c => (
+                                <button key={c.id} onClick={() => { setFormData(p => ({ ...p, client: c.nom })); setClientSearch(''); }}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer">{c.nom}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <div className="space-y-2"><Label className="text-[10px] font-bold">Départ</Label><Input name="depart" value={formData.depart} onChange={handleInputChange} className="h-8 text-xs" placeholder="Ville départ" /></div>
                       <div className="space-y-2"><Label className="text-[10px] font-bold">Arrivée</Label><Input name="arrivee" value={formData.arrivee} onChange={handleInputChange} className="h-8 text-xs" placeholder="Ville arrivée" /></div>
                     </div>
