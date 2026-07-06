@@ -91,7 +91,9 @@ export function DieselVouchers({ profile }: { profile: any }) {
   const kmCurr = Number(formData.kmActuel)    || 0;
   const calculatedKm = kmCurr > kmPrev ? kmCurr - kmPrev : 0;
   const liters = Number(formData.gasoilLiters) || 0;
-  const calculatedConsumption = calculatedKm > 0 ? (liters / calculatedKm) * 100 : 0;
+  const lastVoucher = vouchers.length > 0 ? vouchers[0] : null;
+  const lastLiters = lastVoucher ? Number(lastVoucher.gasoilLiters) || 0 : 0;
+  const calculatedConsumption = calculatedKm > 0 && lastLiters > 0 ? (lastLiters / calculatedKm) * 100 : 0;
   const autoPrixLitre = liters > 0 && Number(formData.gasoilDhs) > 0 ? (Number(formData.gasoilDhs) / liters) : 0;
 
   const selectedDriverObj = drivers.find(d => d.id === formData.driverName);
@@ -123,7 +125,7 @@ export function DieselVouchers({ profile }: { profile: any }) {
       km_parcouru:      calculatedKm,
       gasoil_liters:    liters,
       gasoil_dhs:       Number(formData.gasoilDhs)      || 0,
-      prix_litre:       Number(formData.prixLitre)      || 0,
+      prix_litre:       Number(formData.prixLitre) || (autoPrixLitre > 0 ? parseFloat(autoPrixLitre.toFixed(2)) : 0),
       consommation:     calculatedConsumption,
       lavage_graissage: Number(formData.lavageGraissage) || 0,
       station:          formData.station,
@@ -365,9 +367,9 @@ export function DieselVouchers({ profile }: { profile: any }) {
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase font-bold text-slate-500">KM Précédent</Label>
                     <Input type="number" name="kmPrecedent" value={formData.kmPrecedent} onChange={handleInputChange}
-                      className={`h-8 text-xs font-mono ${formData.kmPrecedent ? 'bg-slate-100 font-bold text-slate-700' : 'bg-white'}`} />
-                    {vouchers.length > 0 && (
-                      <p className="text-[8px] text-slate-400 mt-0.5">Dernier: {vouchers[0].date} · {vouchers[0].kmActuel?.toLocaleString()} km · {vouchers[0].gasoilLiters}L</p>
+                      className="h-8 text-xs font-mono bg-slate-100 font-bold text-slate-700" />
+                    {lastVoucher && (
+                      <p className="text-[8px] text-slate-400 mt-0.5">Dernier plein: {lastVoucher.date} · {lastVoucher.gasoilLiters}L · {lastVoucher.kmActuel?.toLocaleString()} km</p>
                     )}
                   </div>
                   <div className="space-y-1">
@@ -400,8 +402,11 @@ export function DieselVouchers({ profile }: { profile: any }) {
                 <div className="flex items-center justify-between border-t border-slate-100 pt-4">
                   <div className="flex gap-8">
                     <div>
-                      <Label className="text-[10px] uppercase font-bold text-slate-400">Calculated Distance (KM)</Label>
-                      <div className="text-xl font-bold font-mono text-slate-800">{calculatedKm > 0 ? calculatedKm : "0"}</div>
+                      <Label className="text-[10px] uppercase font-bold text-slate-400">Distance parcourue (KM)</Label>
+                      <div className="text-xl font-bold font-mono text-slate-800">{calculatedKm > 0 ? calculatedKm.toLocaleString() : "0"}</div>
+                      {lastLiters > 0 && calculatedKm > 0 && (
+                        <p className="text-[8px] text-slate-400 mt-0.5">{lastLiters}L utilisés sur {calculatedKm} km</p>
+                      )}
                     </div>
                     <div>
                       <Label className="text-[10px] uppercase font-bold text-slate-400">Consommation au 100</Label>
@@ -446,8 +451,8 @@ export function DieselVouchers({ profile }: { profile: any }) {
               </CardContent>
               <div className="bg-slate-50/50 p-2 border-t border-slate-100 flex items-center justify-center">
                 <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <ArrowUpRight size={10} /> Live Excel Calculating Engine:
-                  <span className="font-bold font-mono px-1">=(Liters/KM)*100</span>
+                  <ArrowUpRight size={10} /> Formule:
+                  <span className="font-bold font-mono px-1">=(Litres dernier plein / KM parcourus) × 100</span>
                 </p>
               </div>
             </Card>
