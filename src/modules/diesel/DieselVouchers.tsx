@@ -113,12 +113,13 @@ export function DieselVouchers({ profile }: { profile: any }) {
 
   // Save to Supabase
   const handleSave = async () => {
-    const drvObj = drivers.find(d => d.id === formData.driverName);
+    const drvObj = selectedDriverObj || drivers.find(d => d.vehicle_plate === selectedTruck);
+    if (!drvObj) { alert('Aucun chauffeur associé à ce camion.'); return; }
     const { data, error } = await supabase.from('diesel_vouchers').insert({
       company_id:       profile?.company_id || null,
       accountant_id:    profile?.id         || null,
-      driver_id:        drvObj?.id        || null,
-      driver_name:      drvObj?.full_name || formData.driverName,
+      driver_id:        drvObj.id,
+      driver_name:      drvObj.full_name,
       truck_plate:      selectedTruck,
       voucher_number:   formData.voucherNumber,
       date:             formData.date,
