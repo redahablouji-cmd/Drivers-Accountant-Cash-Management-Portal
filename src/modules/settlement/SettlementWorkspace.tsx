@@ -85,6 +85,7 @@ export function SettlementWorkspace({ profile }: { profile: any }) {
   const handleSaveDepart = async () => {
     if (!selectedDriver) return;
     const { error } = await supabase.from('settlement_records').insert({
+      company_id: profile?.company_id || null,
       driver_id: selectedDriver.id,
       driver_name: selectedDriver.full_name,
       trip_type: 'depart',

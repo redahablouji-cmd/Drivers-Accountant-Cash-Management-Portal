@@ -115,6 +115,8 @@ export function DieselVouchers({ profile }: { profile: any }) {
   const handleSave = async () => {
     const drvObj = drivers.find(d => d.id === formData.driverName);
     const { data, error } = await supabase.from('diesel_vouchers').insert({
+      company_id:       profile?.company_id || null,
+      accountant_id:    profile?.id         || null,
       driver_id:        drvObj?.id        || null,
       driver_name:      drvObj?.full_name || formData.driverName,
       truck_plate:      selectedTruck,
