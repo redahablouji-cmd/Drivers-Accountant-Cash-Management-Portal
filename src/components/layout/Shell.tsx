@@ -6,6 +6,7 @@ import {
   HandCoins, 
   Fuel, 
   Wrench,
+  FileText,
   Settings, 
   ChevronLeft, 
   ChevronRight,
@@ -37,6 +38,7 @@ export function Shell({ currentView, setView, children, profile, onSignOut, bala
     { id: 'settlement', label: 'Settlements', icon: HandCoins },
     { id: 'diesel', label: 'Diesel & Vouchers', icon: Fuel },
     { id: 'fleetfix', label: 'FleetFix', icon: Wrench },
+    { id: 'prestation', label: 'Suivi Prestation', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

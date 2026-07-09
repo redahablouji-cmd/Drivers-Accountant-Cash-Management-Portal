@@ -1,4 +1,4 @@
-export type ViewState = 'dashboard' | 'caisse' | 'settlement' | 'diesel' | 'fleetfix' | 'settings';
+export type ViewState = 'dashboard' | 'caisse' | 'settlement' | 'diesel' | 'fleetfix' | 'prestation' | 'settings';
 
 export interface CashTransaction {
   id: string;

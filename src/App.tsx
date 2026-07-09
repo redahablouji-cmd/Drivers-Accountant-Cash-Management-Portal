@@ -5,6 +5,7 @@ import { Caisse } from './modules/caisse/Caisse';
 import { SettlementWorkspace } from './modules/settlement/SettlementWorkspace';
 import { DieselVouchers } from './modules/diesel/DieselVouchers';
 import { FleetFix } from './modules/fleetfix/FleetFix';
+import { PrestationView } from './modules/prestation/PrestationView';
 import { ViewState } from './lib/types';
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LoginPage from './pages/LoginPage';
@@ -71,6 +72,7 @@ export default function App() {
       case 'settlement':  return <SettlementWorkspace profile={profile} />;
       case 'diesel':      return <DieselVouchers profile={profile} />;
       case 'fleetfix':    return <FleetFix profile={profile} />;
+      case 'prestation':  return <PrestationView profile={profile} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
